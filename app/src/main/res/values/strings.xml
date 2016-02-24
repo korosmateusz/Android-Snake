@@ -1,0 +1,11 @@
+<resources>
+    <string name="app_name">Snake</string>
+    <string name="start_game_button">Start a new game</string>
+    <string name="restart_game_button">Restart game</string>
+    <string name="easy_mode">Easy</string>
+    <string name="medium_mode">Medium</string>
+    <string name="hard_mode">Hard</string>
+    <string name="green">Green</string>
+    <string name="red">Red</string>
+    <string name="blue">Blue</string>
+</resources>
