@@ -5,6 +5,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.View;
+import android.widget.TextView;
 
 public class GameOverActivity extends AppCompatActivity {
 
@@ -20,6 +21,17 @@ public class GameOverActivity extends AppCompatActivity {
             Log.e("Action bar error", "Exception thrown during hiding of notification bar");
         }
         setContentView(R.layout.activity_game_over);
+         /*Textview displaying game score*/
+        TextView finalScore = new TextView(this);
+        /*String with score*/
+        String score = new String();
+
+        finalScore = (TextView)findViewById(R.id.finalScore);
+        Intent intent = getIntent();
+        Bundle bundle = intent.getExtras();
+        if (bundle != null)
+            score = (String)bundle.get("finalScore");
+        finalScore.setText(score);
     }
 
     public void restartGame(View view)

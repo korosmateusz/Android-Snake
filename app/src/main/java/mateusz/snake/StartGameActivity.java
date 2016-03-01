@@ -1,24 +1,22 @@
 package mateusz.snake;
 
 import android.content.Intent;
+import android.content.pm.ActivityInfo;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.util.DisplayMetrics;
 import android.util.Log;
 
-import java.util.ArrayList;
-import java.util.List;
-
 public class StartGameActivity extends AppCompatActivity
 {
 
-    /*enum to specify the direction in which snake is moving*/
+    /*Enum to specify the direction in which snake is moving*/
     enum Direction
     {
         LEFT, RIGHT, UP, DOWN, NONE
     }
 
-    /*enum to specify the game difficulty*/
+    /*Enum to specify the game difficulty*/
     enum Difficulty
     {
         EASY, MEDIUM, HARD
@@ -34,26 +32,57 @@ public class StartGameActivity extends AppCompatActivity
     private Direction direction = Direction.NONE;
     /*Default snake speed*/
     private long speed = 300;
+    /*Maximum snake speed*/
+    private final long MAX_SPEED = 50;
+    /*Game speeds depending on chosen difficulty*/
+    private final int EASY_SPEED = 300;
+    private final int MEDIUM_SPEED = 200;
+    private final int HARD_SPEED = 100;
     /*Starting length of a snake*/
     private int length = 1;
     /*Arrays for holding snake coordinates*/
-    int[] xCoordinates ;
-    int[] yCoordinates;
+    private int[] xCoordinates ;
+    private int[] yCoordinates;
     /*Snake color*/
     private int color;
     /*Snake speed(game difficulty)*/
     private Difficulty difficulty;
+    /*Flag that tells whether snake has eaten an enhanced apple recently*/
+    private boolean isEnhancedAppleEaten = false;
 
     /***Board attributes***/
+    /*Size of borders*/
     private int borderWidth;
     private int borderHeight;
+    /*Size of phone*/
     private int gameWidth;
     private int gameHeight;
+    /*Size of playable field*/
     private int boardWidth;
     private int boardHeight;
+    /*Apple coordinates*/
     private int xAppleCoordinate;
     private int yAppleCoordinate;
+    /*Flag telling whether game is over
+    When it equals true, then game loop is stopped
+     */
     private boolean isGameOver = false;
+    /*Time at which enhanced apple was eaten, if it equals -1 then it wasn't
+    that time is needed to calculate how long the snake should blink
+     */
+    private long enhancedAppleEatenTime = -1;
+    /*Time at which enhanced apple was spawned*/
+    private long enhancedAppleStartTime;
+    /*How long enhanced apple will be on board*/
+    private long enhancedAppleTime = 5;
+    /*Time of blinking after eating enhanced apple*/
+    private final int BLINKING_TIME = 5;
+    /*Enhanced apple coordinates*/
+    private int xEnhancedAppleCoordinate;
+    private int yEnhancedAppleCoordinate;
+    private final double CHANCE_OF_ENHANCED_APPLE = 0.1;
+    private boolean isEnhancedApple = false;
+    private int score = 0;
 
     /*Reference to the view*/
     private StartGameView startGameView;
@@ -61,6 +90,9 @@ public class StartGameActivity extends AppCompatActivity
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        /*Prevent screen from rotating during game*/
+        setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_NOSENSOR);
+        /*Hide status bar so that it doesn't unnecessarily take space*/
         try
         {
             getSupportActionBar().hide();
@@ -69,16 +101,15 @@ public class StartGameActivity extends AppCompatActivity
         {
             Log.e("Action bar error", "Exception thrown during hiding a notification bar");
         }
+        /*Get difficulty and color added to intent*/
         getExtras();
         startGameView = new StartGameView(this, this, color);
-        int barHeight = getStatusBarHeight();   //bar height is needed to set
-                                            //starting coordinates properly
-        setParameters(barHeight);
+        setParameters();
         setContentView(startGameView);
         beginPlaying();
     }
 
-    /***Getters, setters and methods to change snake location*/
+    /*Getters, setters and methods to change snake location*/
     public void changeX(int diff)
     {
         xCoordinates[0] += diff;
@@ -149,6 +180,32 @@ public class StartGameActivity extends AppCompatActivity
         return yCoordinates;
     }
 
+    public int getxEnhancedAppleCoordinate()
+    {
+        return xEnhancedAppleCoordinate;
+    }
+
+    public int getyEnhancedAppleCoordinate()
+    {
+        return yEnhancedAppleCoordinate;
+    }
+
+    public boolean isEnhancedApple()
+    {
+        return isEnhancedApple;
+    }
+
+    public boolean isEnhancedAppleEaten()
+    {
+        return isEnhancedAppleEaten;
+    }
+
+    public String getScore()
+    {
+        return "Score: " + score;
+    }
+
+
     /**
      * Move based on the direction the player chose
      */
@@ -174,10 +231,11 @@ public class StartGameActivity extends AppCompatActivity
     /**
      * Determine size of borders based on screen size and set starting location.
      * Also adjust game speed according to chosen difficulty.
-     * @param barHeight
      */
-    private void setParameters(int barHeight)
+    private void setParameters()
     {
+        /*bar height is needed to set starting coordinates properly*/
+        int barHeight = getStatusBarHeight();
         /*get display size*/
         DisplayMetrics metrics = new DisplayMetrics();
         getWindowManager().getDefaultDisplay().getMetrics(metrics);
@@ -214,15 +272,17 @@ public class StartGameActivity extends AppCompatActivity
         switch(difficulty)
         {
             case EASY:
-                speed = 300;
+                speed = EASY_SPEED;
                 break;
             case MEDIUM:
-                speed = 200;
+                speed = MEDIUM_SPEED;
                 break;
             case HARD:
-                speed = 100;
+                speed = HARD_SPEED;
                 break;
         }
+        /*set enhanced apple time, based on game speed*/
+        enhancedAppleTime = speed/20;
     }
 
     /**
@@ -240,14 +300,16 @@ public class StartGameActivity extends AppCompatActivity
     }
 
     /**
-     * Check the events related to snake's location.
+     * Check the events related to snake.
      * Inform whether snake has eaten an apple, hit a wall and so on.
      */
-    private void checkLocation()
+    private void checkStatus()
     {
+        checkIfBordersPassed();
         checkIfAppleEaten();
         checkIfGameOver();
-        checkIfBordersPassed();
+        checkIfEnhancedAppleTimePassed();
+        checkIfSnakeBoosted();
     }
 
     /**
@@ -270,7 +332,7 @@ public class StartGameActivity extends AppCompatActivity
                     move();
                     startGameView.setWaitingForResponse(false); //notify the view that snake has
                     // moved and another command can be accepted
-                    checkLocation();
+                    checkStatus();
                     try
                     {
                         Thread.sleep(speed);
@@ -326,22 +388,84 @@ public class StartGameActivity extends AppCompatActivity
 
     }
 
+
+    /**
+     * Function analogical to spawnApple, but spawns enhanced apple.
+     */
+    private void spawnEnhancedApple()
+    {
+        /*sets the range of locations at which apple can spawn*/
+        int xRange = gameWidth - 2*borderWidth + 1;
+        int yRange = gameHeight - 2*borderHeight + 1;
+
+		/*sets random x and y coordinates of apple*/
+        xEnhancedAppleCoordinate = (int)(Math.random() * xRange) + borderWidth;
+        yEnhancedAppleCoordinate = (int)(Math.random() * yRange) + borderHeight;
+
+		/*makes coordinates a multiple of SIZE*/
+        int tmp = (xEnhancedAppleCoordinate - borderWidth) % SIZE;
+        xEnhancedAppleCoordinate -= tmp;
+        tmp = (yEnhancedAppleCoordinate - borderHeight) % SIZE;
+        yEnhancedAppleCoordinate -= tmp;
+
+		/*ensures that apple does not spawn out of board or on a snake*/
+        if (xEnhancedAppleCoordinate < borderWidth)
+            xEnhancedAppleCoordinate += SIZE;
+        if (yEnhancedAppleCoordinate < borderHeight)
+            yEnhancedAppleCoordinate += SIZE;
+        if (xEnhancedAppleCoordinate >= gameWidth - borderWidth)
+            xEnhancedAppleCoordinate -= (2*SIZE);
+        if (yEnhancedAppleCoordinate >= gameHeight- borderHeight)
+            yEnhancedAppleCoordinate -= (2*SIZE);
+
+        /*if apple spawns on a snake, another location is found*/
+        for (int i = 0; i < length; i++)
+        {
+            if (xEnhancedAppleCoordinate == xCoordinates[i]
+                    && yEnhancedAppleCoordinate == yCoordinates[i])
+                spawnEnhancedApple();
+        }
+        enhancedAppleStartTime = System.nanoTime();
+        isEnhancedApple = true;
+
+    }
     /**
      * Check is head's coordinates match apple coordinates.
      * If snake has eaten an apple, increments length and spawn another apple.
      */
     private void checkIfAppleEaten()
     {
-        /*if snake's head collides with an apple, increments length,
+        /*If snake's head collides with an apple, increments length,
         adds score and spawns another apple*/
-        if (xAppleCoordinate == xCoordinates[0] && yAppleCoordinate == yCoordinates[0]) {
+        if (xAppleCoordinate == xCoordinates[0] && yAppleCoordinate == yCoordinates[0])
+        {
             length++;
             spawnApple();
+            score += 10;
+            /*If speed does not exceed maximum speed, change it to make game harder*/
+            if (speed > MAX_SPEED)
+                speed -= 5;
+            /*Check whether enhanced apple should be spawned*/
+            if (Math.random() > (1 - CHANCE_OF_ENHANCED_APPLE))
+                if (!isEnhancedApple)
+                    spawnEnhancedApple();
+        }
+        /*Check whether enhanced apple was eaten*/
+        if (xEnhancedAppleCoordinate == xCoordinates[0] &&
+                yEnhancedAppleCoordinate == yCoordinates[0] &&
+                isEnhancedApple) {
+            length++;
+            score += 50;
+            /*Eating enhanced apple slows the game down*/
+            speed += 20;
+            enhancedAppleEatenTime = System.nanoTime();
+            isEnhancedApple = false;
+            isEnhancedAppleEaten = true;
         }
     }
 
     /**
-     * Check is snake has eaten himself.
+     * Check if snake has eaten himself.
      * If player lost, create game over activity.
      */
     private void checkIfGameOver()
@@ -352,6 +476,7 @@ public class StartGameActivity extends AppCompatActivity
             {
                 isGameOver = true;
                 Intent intent = new Intent(this, GameOverActivity.class);
+                intent.putExtra("finalScore", getScore());
                 startActivity(intent);
             }
     }
@@ -363,11 +488,11 @@ public class StartGameActivity extends AppCompatActivity
     {
         if (xCoordinates[0] < borderWidth)
             xCoordinates[0] = borderWidth + boardWidth - SIZE;
-        if (xCoordinates[0] >= gameWidth - borderWidth)
+        if (xCoordinates[0] > gameWidth - borderWidth - SIZE)
             xCoordinates[0] = borderWidth;
         if(yCoordinates[0] < borderHeight)
             yCoordinates[0] = borderHeight + boardHeight- SIZE;
-        if (yCoordinates[0] >= gameHeight - borderHeight)
+        if (yCoordinates[0] > gameHeight - borderHeight - SIZE)
             yCoordinates[0] = borderHeight;
     }
 
@@ -384,6 +509,31 @@ public class StartGameActivity extends AppCompatActivity
             color = (int)bundle.get("chosenColor");
             difficulty = (Difficulty)bundle.get("chosenDifficulty");
         }
+    }
+
+    /**
+     * Checks if it is time the enhanced apple vanished.
+     */
+    private void checkIfEnhancedAppleTimePassed()
+    {
+        /*How long enhanced apple was on board in seconds*/
+        long duration = (System.nanoTime() - enhancedAppleStartTime) / 1000000000;
+        /*After a set time enhanced apple vanishes*/
+        if (duration > enhancedAppleTime)
+            isEnhancedApple = false;
+    }
+
+    /**
+     * Check how much time after eating enhanced apple has passed.
+     * If it is greater than blinking time, stop the blinking.
+     */
+    private void checkIfSnakeBoosted()
+    {
+        /*Check how long snake was boosted*/
+        long duration = (System.nanoTime() - enhancedAppleEatenTime) / 1000000000;
+        /*If that time exceeds blinking time, stop the boost*/
+        if (duration > BLINKING_TIME)
+            isEnhancedAppleEaten = false;
     }
 
 }

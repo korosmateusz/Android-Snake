@@ -9,7 +9,7 @@ import android.util.AttributeSet;
 import android.view.MotionEvent;
 import android.view.View;
 
-import java.util.List;
+import java.util.Random;
 
 import mateusz.snake.StartGameActivity.Direction;
 
@@ -25,6 +25,9 @@ public class StartGameView extends View
     private float initialY = 0f;
     private float finalX = 0f;
     private float finalY = 0f;
+
+    /*Flag used for blinking when enhanced apple is on board*/
+    private boolean blinkFlag = false;
 
     /*Flag that checks whether a snake is about to move, prevents the snake from turning
     backwards when two swipes are made too fast
@@ -65,6 +68,7 @@ public class StartGameView extends View
         color = chosenColor;
     }
 
+
     @Override
     protected void onDraw(Canvas canvas)
     {
@@ -72,7 +76,26 @@ public class StartGameView extends View
         Paint paint = new Paint();
 
         /*paint borders*/
-        paint.setColor(Color.WHITE);
+        /*if enhanced apple is on board, frame is blinking*/
+        if(activity.isEnhancedApple())
+        {
+            if (!blinkFlag)
+            {
+                paint.setColor(Color.YELLOW);
+                blinkFlag = true;
+            }
+            else
+            {
+                paint.setColor(Color.WHITE);
+                blinkFlag = false;
+            }
+        }
+        /*when there is no enhanced apple, paint frame normally and set flag to default*/
+        else
+        {
+            paint.setColor(Color.WHITE);
+            blinkFlag = false;
+        }
         paint.setStyle(Paint.Style.FILL);
         canvas.drawPaint(paint);
 
@@ -86,18 +109,37 @@ public class StartGameView extends View
         int[] yCoordinates = activity.getYCoordinates();
 
         /*paints snake's body*/
-        for (int i = 1; i < activity.getLength(); i++)
+       /*if snake is boosted, its body is of random color*/
+        if (activity.isEnhancedAppleEaten())
         {
-            Rect body = new Rect(xCoordinates[i], yCoordinates[i],
-                    xCoordinates[i] + activity.getSize(), yCoordinates[i] + activity.getSize());
-            paint.setColor(color);
-            paint.setStyle(Paint.Style.FILL);
-            canvas.drawRect(body, paint);   //draw filling
-            paint.setColor(Color.BLACK);
-            paint.setStyle(Paint.Style.STROKE);
-            canvas.drawRect(body, paint);   //draw borders
+            for (int i = 1; i < activity.getLength(); i++)
+            {
+                Rect body = new Rect(xCoordinates[i], yCoordinates[i],
+                        xCoordinates[i] + activity.getSize(), yCoordinates[i] + activity.getSize());
+                paint.setStyle(Paint.Style.FILL);
+                Random color = new Random();
+                paint.setColor(Color.argb(255, color.nextInt(255),
+                        color.nextInt(255), color.nextInt(255)));
+                canvas.drawRect(body, paint);   //draw filling
+                paint.setColor(Color.BLACK);
+                paint.setStyle(Paint.Style.STROKE);
+                canvas.drawRect(body, paint);   //draw borders
+            }
         }
-
+        /*if snake is not boosted, paint it normally*/
+        else
+        {
+            for (int i = 1; i < activity.getLength(); i++) {
+                Rect body = new Rect(xCoordinates[i], yCoordinates[i],
+                        xCoordinates[i] + activity.getSize(), yCoordinates[i] + activity.getSize());
+                paint.setColor(color);
+                paint.setStyle(Paint.Style.FILL);
+                canvas.drawRect(body, paint);   //draw filling
+                paint.setColor(Color.BLACK);
+                paint.setStyle(Paint.Style.STROKE);
+                canvas.drawRect(body, paint);   //draw borders
+            }
+        }
         /*paint snake's head*/
         paint.setColor(Color.YELLOW);
         paint.setStyle(Paint.Style.FILL);
@@ -113,6 +155,26 @@ public class StartGameView extends View
         canvas.drawCircle(activity.getxAppleCoordinate() + activity.getSize()/2,
                 activity.getyAppleCoordinate() + activity.getSize()/2,
                 activity.getSize()/2, paint);
+
+        /*paint an enhanced apple*/
+        if (activity.isEnhancedApple())
+        {
+            Random color = new Random();
+            paint.setColor(Color.argb(255, color.nextInt(255),
+                    color.nextInt(255), color.nextInt(255)));
+            canvas.drawCircle(activity.getxEnhancedAppleCoordinate() + activity.getSize() / 2,
+                    activity.getyEnhancedAppleCoordinate() + activity.getSize() / 2,
+                    activity.getSize() / 2, paint);
+        }
+
+        /*paint score*/
+        paint.setColor(Color.DKGRAY);
+        paint.setAntiAlias(true);
+        paint.setTextSize(50);
+        Rect textBounds = new Rect();
+        paint.getTextBounds(activity.getScore(), 0,
+                activity.getScore().length(), textBounds);
+        canvas.drawText(activity.getScore(), mWidth/2 - textBounds.centerX(), -textBounds.top, paint);
 
         canvas.save();
     }
