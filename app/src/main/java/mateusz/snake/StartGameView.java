@@ -168,13 +168,14 @@ public class StartGameView extends View
         }
 
         /*paint score*/
+        String scoreText = "Score: " + Integer.toString(activity.getScore());
         paint.setColor(Color.DKGRAY);
         paint.setAntiAlias(true);
         paint.setTextSize(50);
         Rect textBounds = new Rect();
-        paint.getTextBounds(activity.getScore(), 0,
-                activity.getScore().length(), textBounds);
-        canvas.drawText(activity.getScore(), mWidth/2 - textBounds.centerX(), -textBounds.top, paint);
+        paint.getTextBounds(scoreText, 0,
+                scoreText.length(), textBounds);
+        canvas.drawText(scoreText, mWidth/2 - textBounds.centerX(), -textBounds.top, paint);
 
         canvas.save();
     }

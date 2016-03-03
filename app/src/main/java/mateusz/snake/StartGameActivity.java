@@ -200,9 +200,9 @@ public class StartGameActivity extends AppCompatActivity
         return isEnhancedAppleEaten;
     }
 
-    public String getScore()
+    public int getScore()
     {
-        return "Score: " + score;
+        return score;
     }
 
 
