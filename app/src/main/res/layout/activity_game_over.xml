@@ -33,7 +33,7 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:textColor="#FFFFFF"
-        android:text="Large Text"
+        android:text=""
         android:id="@+id/highScore"
         android:layout_above="@+id/button"
         android:layout_centerHorizontal="true" />
@@ -43,7 +43,7 @@
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
         android:textColor="#FFFFFF"
-        android:text="Large Text"
+        android:text=""
         android:id="@+id/finalScore"
         android:layout_above="@+id/highScore"
         android:layout_centerHorizontal="true" />

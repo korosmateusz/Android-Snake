@@ -8,4 +8,6 @@
     <string name="green">Green</string>
     <string name="red">Red</string>
     <string name="blue">Blue</string>
+    <string name="color_choose">Choose color</string>
+    <string name="difficulty_choose">Choose difficulty</string>
 </resources>

@@ -22,7 +22,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Choose color"
+            android:text="@string/color_choose"
             android:id="@+id/textView"
             android:textColor="#FFFFFF"
             android:layout_weight="2"
@@ -32,7 +32,7 @@
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
-            android:text="Choose difficulty"
+            android:text="@string/difficulty_choose"
             android:id="@+id/textView2"
             android:textColor="#FFFFFF"
             android:layout_weight="2"

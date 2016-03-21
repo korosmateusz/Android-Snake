@@ -376,8 +376,8 @@ public class StartGameActivity extends AppCompatActivity
 		/*ensures that apple does not spawn out of board or on a snake*/
         if (xAppleCoordinate < borderWidth) xAppleCoordinate += SIZE;
         if (yAppleCoordinate < borderHeight) yAppleCoordinate += SIZE;
-        if (xAppleCoordinate >= gameWidth - borderWidth) xAppleCoordinate -= (2*SIZE);
-        if (yAppleCoordinate >= gameHeight- borderHeight) yAppleCoordinate -= (2*SIZE);
+        if (xAppleCoordinate > gameWidth - borderWidth - SIZE) xAppleCoordinate -= (2*SIZE);
+        if (yAppleCoordinate > gameHeight- borderHeight - SIZE) yAppleCoordinate -= (2*SIZE);
 
         /*if apple spawns on a snake, another location is found*/
         for (int i = 0; i < length; i++)
